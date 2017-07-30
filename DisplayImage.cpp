@@ -163,22 +163,57 @@ Mat RGBFilter(Mat imgOriginal, Mat imgResult, int* array)
 //Use skin color to locate the possible location of the face in the picture.
 Mat SkinColorDetection(Mat imgOriginal, int* array)
 {
+	vector<int> param(2);
+	param[0] = cv::IMWRITE_JPEG_QUALITY;
+	param[1] = 95;
+
 	//initialize image container for the result image.
 	Mat imgResult;
 	imgResult = imgOriginal.clone();
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (i==0)
+		{
+			if (fork()==0)
+			{
+				imgResult = HSVFilter(imgOriginal, imgResult, array);
+				imwrite("HSV.jpg",imgResult,param);
+				exit(0);
+			}
+		}else if (i==1)
+		{
+			if (fork()==0)
+			{
+				imgResult = YCrCbFilter(imgOriginal, imgResult, array);
+				imwrite("YCrCb.jpg",imgResult,param);
+				exit(0);
+			}
+		}else if (i==2)
+		{
+			if (fork()==0)
+			{
+				imgResult = RGBFilter(imgOriginal, imgResult, array);
+				imwrite("RGB.jpg",imgResult,param);
+				exit(0);
+			}
+		}
+	}
 	
 	//HSV filter
 	/*std::thread t1{[&imgOriginal, &imgResult, &array]{
 		imgResult = HSVFilter(imgOriginal, imgResult, array);	
 	}};*/
-	imgResult = HSVFilter(imgOriginal, imgResult, array);
+	
+	
 	
 
 	//YCrCb filter
 	/*std::thread t2{[&imgOriginal, &imgResult, &array]{
 		imgResult = YCrCbFilter(imgOriginal, imgResult, array);
 	}};*/
-	imgResult = YCrCbFilter(imgOriginal, imgResult, array);
+	
+	
 
 
 	//RGB filter
@@ -189,10 +224,23 @@ Mat SkinColorDetection(Mat imgOriginal, int* array)
 	t1.join();
 	t2.join();
 	t3.join();*/
-	imgResult = RGBFilter(imgOriginal, imgResult, array);
 	
-	//optional: print the resultant array
-	//PrintArray(array,imgResult.rows,imgResult.cols);
+	
+	while (wait(NULL) > 0){};
+	Mat imgHSV = imread("HSV.jpg",1);
+	Mat imgYCrCb = imread("YCrCb.jpg",1);
+	Mat imgRGB = imread("RGB.jpg",1);
+	
+	//Do a bitwise operation to cancel out the unnecessary pixel.
+	cv::bitwise_and(imgHSV,imgYCrCb,imgResult);
+	cv::bitwise_and(imgResult,imgRGB,imgResult);
+
+	//Testing
+	/*
+	Mat imgResult = imgOriginal.clone();
+	imgResult = HSVFilter(imgOriginal, imgResult, array);
+	imgResult = YCrCbFilter(imgOriginal, imgResult, array);
+	imgResult = RGBFilter(imgOriginal, imgResult, array);*/
 	return imgResult;
 }
 
@@ -243,7 +291,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	vector<int> param(2);
 	param[0] = cv::IMWRITE_JPEG_QUALITY;
 	param[1] = 95;
-	for (int i = 0;i < 2;i++)
+	for (int i = 0;i < 3;i++)
 	{
 		if (i==0)
 		{
@@ -277,9 +325,20 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 				exit(0);
 			}
 		}
+		if (i==2)
+		{
+			if (fork()==0)
+			{
+				imgSkinColorResult = SkinColorDetection(imgOriginal, array);
+				imwrite("finalResult.jpg",imgSkinColorResult,param);
+				exit(0);
+			}
+			
+		}
 	}
-	imgSkinColorResult = SkinColorDetection(imgOriginal, array);
+	
 	while(wait(NULL)>0){}
+	imgSkinColorResult = imread("finalResult.jpg",1);
 	int x,y,width,height;
 	std::ifstream face_input("Face.txt");
 	while (face_input >> x >> y >> width >> height)
@@ -291,6 +350,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	{
 		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
 	}
+	imwrite("finalResult.jpg",imgSkinColorResult,param);
 	return imgSkinColorResult;
 }
 //Multi Process
@@ -461,7 +521,7 @@ Mat Combine(Mat imgOriginal, int* array)
 int main(int argc, char** argv)
 {
 	//Choose the algorithm
-	string command = "c";
+	string command = "mp";
 	Mat image;
 
 	if (argc != 2 )
@@ -556,7 +616,7 @@ int main(int argc, char** argv)
 		}
 	}else if (command == "mp")
 	{
-		for (int i = 0; i < 1; i++)
+		for (int i = 0; i < 10; i++)
 		{
 			clock_t t1,t2;
 			t1 = clock();
@@ -567,6 +627,12 @@ int main(int argc, char** argv)
 			cout << " " << endl;
 		}
 	}
+	/*cv::transform(imgResult, imgResult, cv::Matx13f(1,1,1));
+	std::ofstream out;
+	out.open("Mat.txt");
+	out << imgResult << endl;
+	out.close();*/
+	
 	PrintArray(array,imgResult.rows,imgResult.cols);
 	if (argc == 2)
 	{
