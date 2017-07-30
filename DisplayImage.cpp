@@ -467,7 +467,7 @@ int main(int argc, char** argv)
 	if (argc != 2 )
 	{
 		//printf("usage:DisplayImage.out <Image_Path>\n");
-		image = imread("luna.jpg",1);
+		image = imread("FFXV/luna.jpg",1);
 		if ( !image.data )
 		{
 			printf("No image data\n");
