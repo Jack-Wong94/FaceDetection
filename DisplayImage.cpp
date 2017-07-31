@@ -345,11 +345,13 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	{
 		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
 	}
+	face_input.close();
 	std::ifstream eye_input("Eye.txt");
 	while (eye_input >> x >> y >> width >> height)
 	{
 		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
 	}
+	eye_input.close();
 	imwrite("finalResult.jpg",imgSkinColorResult,param);
 	return imgSkinColorResult;
 }
@@ -392,7 +394,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 //Combine haar cascade classifier with skin color segmentation algorithm
 Mat Combine(Mat imgOriginal, int* array)
 {
-	Mat imgSkinColorResult = SkinColorDetection(imgOriginal, array);
+	Mat imgSkinColorResult = Filter(imgOriginal, array);
 	vector<Rect> eyes = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_eye.xml");
 	vector<Rect> faces = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_frontalface_alt.xml");
 	DrawFeatureBox(imgSkinColorResult, eyes);
@@ -527,7 +529,8 @@ int main(int argc, char** argv)
 	if (argc != 2 )
 	{
 		//printf("usage:DisplayImage.out <Image_Path>\n");
-		image = imread("FFXV/luna.jpg",1);
+		image = imread(argv[1],1);
+		command = argv[2];
 		if ( !image.data )
 		{
 			printf("No image data\n");
@@ -536,13 +539,14 @@ int main(int argc, char** argv)
 	}else
 	{
 		image = imread(argv[1],1);
+		command = argv[2];
 		if ( !image.data )
 		{
 			printf("No image data\n");
 			return -1;
 		}
-		cout << "Enter mode: s(Skin Color segmentation), e(eye cascade), f(face cascade), c(combine), tf(alternate skin filter), mp(multi-process): ";
-		cin >> command; 
+		//cout << "Enter mode: ss(Skin Color segmentation), sp(skin color parallelization), e(eye cascade), f(face cascade), c(combine), tf(alternate skin filter), mp(multi-process): ";
+		//cin >> command; 
 	}
 
 	//initialize binary array
@@ -558,9 +562,21 @@ int main(int argc, char** argv)
 	imshow("Display Image", image);
 	waitKey(0);*/
 	Mat imgResult;
-	if (command == "s")
+	if (command == "ss")
 	{
-		for (int i = 0; i<10; i++){
+		for (int i = 0; i<1; i++){
+			clock_t t1,t2;
+			t1 = clock();
+			imgResult = Filter(image, array);
+			t2 = clock();
+			float diff = ((float)t2 - (float)t1)/CLOCKS_PER_SEC;
+			cout << diff << endl;
+		}
+		
+		
+	}else if (command == "sp")
+	{
+		for (int i = 0; i<1; i++){
 			clock_t t1,t2;
 			t1 = clock();
 			imgResult = SkinColorDetection(image, array);
@@ -568,8 +584,6 @@ int main(int argc, char** argv)
 			float diff = ((float)t2 - (float)t1)/CLOCKS_PER_SEC;
 			cout << diff << endl;
 		}
-		
-		
 	}else if (command == "e")
 	{
 		clock_t t1,t2;
@@ -616,7 +630,7 @@ int main(int argc, char** argv)
 		}
 	}else if (command == "mp")
 	{
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			clock_t t1,t2;
 			t1 = clock();
