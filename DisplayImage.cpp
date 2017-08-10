@@ -290,7 +290,7 @@ void dum(){while(true){cout<<"dum"<<endl;}}
 //Multi Process
 Mat MultiProcess(Mat imgOriginal, int* array)
 {
-	Mat imgSkinColorResult;
+	Mat imgSkinColorResult = imgOriginal.clone();
 	vector<int> param(2);
 	param[0] = cv::IMWRITE_JPEG_QUALITY;
 	param[1] = 95;
@@ -333,7 +333,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 			if (fork()==0)
 			{
 				imgSkinColorResult = Filter(imgOriginal, array);
-				imwrite("finalResult.jpg",imgSkinColorResult,param);
+				//imwrite("finalResult.jpg",imgSkinColorResult,param);
 				
 				exit(0);
 			}
@@ -356,7 +356,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
 	}
 	eye_input.close();
-	imwrite("finalResult.jpg",imgSkinColorResult,param);
+	//imwrite("finalResult.jpg",imgSkinColorResult,param);
 	return imgSkinColorResult;
 }
 //Multi Process
