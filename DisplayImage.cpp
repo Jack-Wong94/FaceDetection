@@ -14,10 +14,10 @@ using namespace cv;
 using namespace std;
 
 //Print the binary array output from skin color detection
-void PrintArray(int* array, int rows, int cols)
+void PrintArray(int* array, int rows, int cols, string fileName)
 {
 	std::ofstream output_file;
-	output_file.open("Result.txt");
+	output_file.open(fileName);
 	for (int i = 0; i < rows; i++)
 	{
 		for (int j = 0; j < cols; j++)
@@ -110,6 +110,7 @@ Mat HSVFilter(Mat imgOriginal, Mat imgResult, int* array)
 			
 		}
 	}
+	PrintArray(array, imgHSV.rows, imgHSV.cols, "HSV.txt");
 	return imgResult;
 }
 
@@ -133,6 +134,7 @@ Mat YCrCbFilter(Mat imgOriginal, Mat imgResult, int* array)
 			}
 		}
 	}
+	PrintArray(array, imgYCrCb.rows, imgYCrCb.cols, "YCrCb.txt");
 	return imgResult;
 }
 
@@ -158,6 +160,7 @@ Mat RGBFilter(Mat imgOriginal, Mat imgResult, int* array)
 			}
 		}
 	}
+	PrintArray(array, imgRGB.rows, imgRGB.cols, "RGB.txt");
 	return imgResult;
 }
 //Use skin color to locate the possible location of the face in the picture.
@@ -329,8 +332,9 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 		{
 			if (fork()==0)
 			{
-				imgSkinColorResult = SkinColorDetection(imgOriginal, array);
+				imgSkinColorResult = Filter(imgOriginal, array);
 				imwrite("finalResult.jpg",imgSkinColorResult,param);
+				
 				exit(0);
 			}
 			
@@ -338,7 +342,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	}
 	
 	while(wait(NULL)>0){}
-	imgSkinColorResult = imread("finalResult.jpg",1);
+	
 	int x,y,width,height;
 	std::ifstream face_input("Face.txt");
 	while (face_input >> x >> y >> width >> height)
@@ -641,14 +645,56 @@ int main(int argc, char** argv)
 			cout << " " << endl;
 		}
 	}
-	/*cv::transform(imgResult, imgResult, cv::Matx13f(1,1,1));
+	//PrintArray(array,imgResult.rows, imgResult.cols, "Result.txt");
+	/*Mat imgTransform;
+	cv::transform(imgResult, imgTransform, cv::Matx13f(1,1,1));
 	std::ofstream out;
-	out.open("Mat.txt");
+	out.open("Result.txt");
+	out << imgTransform << endl;
+	out.close();*/
+
+	/*for (int i = 0; i < imgResult.rows; i++)
+	{
+		for (int j = 0; j < imgResult.cols; j++)
+		{
+			Vec3b BGRColor = imgResult.at<Vec3b>(Point(j, i));
+			int B = BGRColor.val[0];
+			int G = BGRColor.val[1];
+			int R = BGRColor.val[2];
+			
+			//constraint of HSV
+			if (B==0 && G==0 && R==0)
+			{
+				
+				array[i*(j+1) + j] = 0;
+			}
+			
+		}
+	}
+	PrintArray(array,imgResult.rows,imgResult.cols);*/
+
+	/*Mat imgGray(imgResult.size(),CV_8U);
+	cvtColor(imgResult, imgGray, CV_BGR2GRAY);
+	Mat imgBinary(imgGray.size(),imgGray.type());
+	threshold(imgGray,imgBinary,100,255,cv::THRESH_BINARY);
+	std::ofstream out;
+	out.open("Result.txt");
+	out << imgBinary << endl;
+	out.close();*/
+
+	/*std::ofstream out;
+	out.open("Result.txt");
+	Mat imgGray;
+	cvtColor(imgResult, imgGray,CV_BGR2GRAY);
+	out << imgGray << endl;
+	out.close();*/
+
+	/*std::ofstream out;
+	out.open("Result.txt");
 	out << imgResult << endl;
 	out.close();*/
-	
-	PrintArray(array,imgResult.rows,imgResult.cols);
-	if (argc == 2)
+
+	if (argc == 4)
 	{
 		imshow("Original",image);
 		imshow("Result", imgResult);
