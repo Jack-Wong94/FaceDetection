@@ -294,7 +294,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	vector<int> param(2);
 	param[0] = cv::IMWRITE_JPEG_QUALITY;
 	param[1] = 95;
-	for (int i = 0;i < 3;i++)
+	for (int i = 0;i < 2;i++)
 	{
 		if (i==0)
 		{
@@ -328,18 +328,10 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 				exit(0);
 			}
 		}
-		if (i==2)
-		{
-			if (fork()==0)
-			{
-				imgSkinColorResult = Filter(imgOriginal, array);
-				//imwrite("finalResult.jpg",imgSkinColorResult,param);
-				
-				exit(0);
-			}
-			
-		}
+		
 	}
+	imgSkinColorResult = Filter(imgOriginal, array);
+	//imwrite("finalResult.jpg",imgSkinColorResult,param);
 	
 	while(wait(NULL)>0){}
 	
