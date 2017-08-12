@@ -340,15 +340,33 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 	while (face_input >> x >> y >> width >> height)
 	{
 		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
+		
 	}
 	face_input.close();
 	std::ifstream eye_input("Eye.txt");
 	while (eye_input >> x >> y >> width >> height)
 	{
-		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
+		/*int newY = y+height;
+		if ((y+height*2) > imgSkinColorResult.cols)
+		{
+			newY = imgSkinColorResult.cols;
+		}*/
+		Rect r1(x,y,width,height);
+		Mat approxFace = imgSkinColorResult(r1).clone();
+		cvtColor(approxFace,approxFace,CV_BGR2GRAY);
+		float PercentageZeroPixel = float(((width*height) - countNonZero(approxFace))/(width*height));	
+		//cout << PercentageZeroPixel << endl;	
+		if (PercentageZeroPixel==0)
+		{
+			rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
+			//cout << "Face Detected" << endl;
+		}
 	}
 	eye_input.close();
 	//imwrite("finalResult.jpg",imgSkinColorResult,param);
+	//test feature: move the eye cascade filter down and count how many pixel is black. If >50%, not face
+	
+
 	return imgSkinColorResult;
 }
 //Multi Process
