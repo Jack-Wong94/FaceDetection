@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fstream>
+#include <dirent.h>
 
 using namespace cv;
 using namespace std;
@@ -330,7 +331,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 		}
 		
 	}
-	imgSkinColorResult = Filter(imgOriginal, array);
+	imgSkinColorResult = SkinColorDetection(imgOriginal, array);
 	//imwrite("finalResult.jpg",imgSkinColorResult,param);
 	
 	while(wait(NULL)>0){}
@@ -533,36 +534,8 @@ Mat Combine(Mat imgOriginal, int* array)
 	DrawFeatureBox(imgSkinColorResult, faces);
 	return imgSkinColorResult;*/
 }
-
-int main(int argc, char** argv)
+void ImageProcess(Mat image,string command,bool showImage,string fileName)
 {
-	//Choose the algorithm
-	string command = "mp";
-	Mat image;
-
-	if (argc != 2 )
-	{
-		//printf("usage:DisplayImage.out <Image_Path>\n");
-		image = imread(argv[1],1);
-		command = argv[2];
-		if ( !image.data )
-		{
-			printf("No image data\n");
-			return -1;
-		}
-	}else
-	{
-		image = imread(argv[1],1);
-		command = argv[2];
-		if ( !image.data )
-		{
-			printf("No image data\n");
-			return -1;
-		}
-		//cout << "Enter mode: ss(Skin Color segmentation), sp(skin color parallelization), e(eye cascade), f(face cascade), c(combine), tf(alternate skin filter), mp(multi-process): ";
-		//cin >> command; 
-	}
-
 	//initialize binary array
 	int* array;
 	int frameSize = image.rows * image.cols;
@@ -625,8 +598,8 @@ int main(int argc, char** argv)
 			imgResult = Combine(image, array);
 			t2 = clock();
 			float diff = ((float)t2 - (float)t1)/CLOCKS_PER_SEC;
-			cout << diff << endl;
-			cout << " " << endl;
+			//cout << diff << endl;
+			//cout << " " << endl;
 		}
 		
 
@@ -651,8 +624,8 @@ int main(int argc, char** argv)
 			imgResult = MultiProcess(image, array);
 			t2 = clock();
 			float diff = ((float)t2 - (float)t1)/CLOCKS_PER_SEC;
-			cout << diff << endl;
-			cout << " " << endl;
+			//cout << diff << endl;
+			//cout << " " << endl;
 		}
 	}
 	//PrintArray(array,imgResult.rows, imgResult.cols, "Result.txt");
@@ -704,12 +677,84 @@ int main(int argc, char** argv)
 	out << imgResult << endl;
 	out.close();*/
 
-	if (argc == 4)
+	if (showImage)
 	{
-		imshow("Original",image);
-		imshow("Result", imgResult);
+		//imshow("Original",image);
+		imshow(fileName, imgResult);
 		waitKey(0);
+		destroyWindow(fileName);
+	}
+	free(array);
+	
+}
+int main(int argc, char** argv)
+{
+	//Choose to show picture.
+	bool showImage;
+	if (argc > 3)
+	{
+		showImage = true;
+	}else
+	{
+		showImage = false;
+	}
+
+	//Choose the algorithm
+	string command = "mp";
+	Mat image;
+
+	DIR *dir;
+	struct dirent *ent;
+	if ((dir=opendir(argv[1]))!=NULL)
+	{
+		while((ent = readdir(dir)) != NULL)
+		{
+			string fileName = ent->d_name;
+			string dirName = argv[1];
+			string delimiter = "/";
+			string filePath = dirName+delimiter+fileName;
+			cout << filePath << endl;
+			image = imread(filePath,1);
+			if (image.data)
+			{
+				ImageProcess(image,argv[2],showImage,filePath);
+				
+			}else
+			{
+				cout << "No image data" << endl;			
+			}
+			
+		}
+		closedir(dir);
+	}else
+	{
+		image = imread(argv[1],1);
+		ImageProcess(image,argv[2],showImage,argv[1]);
 	}
 	
+	/*if (argc != 2 )
+	{
+		//printf("usage:DisplayImage.out <Image_Path>\n");
+		image = imread(argv[1],1);
+		command = argv[2];
+		if ( !image.data )
+		{
+			printf("No image data\n");
+			return -1;
+		}
+	}else
+	{
+		image = imread(argv[1],1);
+		command = argv[2];
+		if ( !image.data )
+		{
+			printf("No image data\n");
+			return -1;
+		}
+		//cout << "Enter mode: ss(Skin Color segmentation), sp(skin color parallelization), e(eye cascade), f(face cascade), c(combine), tf(alternate skin filter), mp(multi-process): ";
+		//cin >> command; 
+	}*/
+
+	waitKey(0);
 	return 0;
 }
