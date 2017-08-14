@@ -757,10 +757,12 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 
 	if (showImage)
 	{
-		//imshow("Original",image);
-		imshow(fileName, imgResult);
+		imshow(fileName,image);
+		imshow(fileName+"_Result", imgResult);
+		moveWindow(fileName,500,0);
 		waitKey(0);
-		destroyWindow(fileName);
+		destroyAllWindows();
+		//destroyWindow(fileName);
 	}
 	free(array);
 	
