@@ -285,8 +285,82 @@ Mat FaceDetection(Mat imgOriginal)
 	return imgOriginal;
 	
 }
-void foo(){while(true){cout<<"foo"<<endl;}}
-void dum(){while(true){cout<<"dum"<<endl;}}
+//Partial skin filter
+Mat PartialSkinFilter(Mat imgOriginal, int* array)
+{
+	Mat imgSkinColorResult = imgOriginal.clone();
+	vector<int> param(2);
+	param[0] = cv::IMWRITE_JPEG_QUALITY;
+	param[1] = 95;
+	for (int i = 0;i < 2;i++)
+	{
+		if (i==0)
+		{
+			if (fork()==0)
+			{
+				vector<Rect> eyes = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_eye.xml");
+				std::ofstream output_file;
+				output_file.open("Eye.txt");
+				for(int j = 0; j < eyes.size(); j++)
+				{
+					Rect r = eyes[j];
+					output_file << r.x << " " << r.y << " " << r.width << " " << r.height << "\n";
+				}
+				output_file.close();
+				exit(0);
+			}
+		}
+		if (i==1)
+		{
+			if (fork()==0)
+			{
+				vector<Rect> faces = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_frontalface_alt.xml");
+				std::ofstream output_file;
+				output_file.open("Face.txt");
+				for(int j = 0; j < faces.size(); j++)
+				{
+					Rect r = faces[j];
+					output_file << r.x << " " << r.y << " " << r.width << " " << r.height << "\n";
+				}
+				output_file.close();
+				exit(0);
+			}
+		}
+		
+	}
+	while (wait(NULL)>0){}
+	int x,y,width,height;
+	std::ifstream face_input("Face.txt");
+	while (face_input >> x >> y >> width >> height)
+	{
+		rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
+		
+	}
+	face_input.close();
+	std::ifstream eye_input("Eye.txt");
+	while (eye_input >> x >> y >> width >> height)
+	{
+		/*int newY = y+height;
+		if ((y+height*2) > imgSkinColorResult.cols)
+		{
+			newY = imgSkinColorResult.cols;
+		}*/
+		Rect r1(x,y,width,height);
+		Mat approxFace = imgSkinColorResult(r1).clone();
+		approxFace = Filter(approxFace,array);
+		cvtColor(approxFace,approxFace,CV_BGR2GRAY);
+		float PercentageZeroPixel = float(((width*height) - countNonZero(approxFace))/(width*height));	
+		//cout << PercentageZeroPixel << endl;	
+		if (PercentageZeroPixel==0)
+		{
+			rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
+			//cout << "Face Detected" << endl;
+		}
+	}
+	eye_input.close();
+	return imgSkinColorResult;
+
+}
 
 //Multi Process
 Mat MultiProcess(Mat imgOriginal, int* array)
@@ -331,6 +405,7 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 		}
 		
 	}
+	//Need to consider;
 	imgSkinColorResult = SkinColorDetection(imgOriginal, array);
 	//imwrite("finalResult.jpg",imgSkinColorResult,param);
 	
@@ -627,6 +702,9 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 			//cout << diff << endl;
 			//cout << " " << endl;
 		}
+	}else if (command == "pf")
+	{
+		imgResult = PartialSkinFilter(image, array);
 	}
 	//PrintArray(array,imgResult.rows, imgResult.cols, "Result.txt");
 	/*Mat imgTransform;
