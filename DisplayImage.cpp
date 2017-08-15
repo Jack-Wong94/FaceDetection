@@ -430,9 +430,11 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 		Rect r1(x,y,width,height);
 		Mat approxFace = imgSkinColorResult(r1).clone();
 		cvtColor(approxFace,approxFace,CV_BGR2GRAY);
-		float PercentageZeroPixel = float(((width*height) - countNonZero(approxFace))/(width*height));	
+		float PercentageZeroPixel = float(float((width*height) - countNonZero(approxFace))/(width*height));	
+		//float jk = float(float(1)/10);
+		//cout << jk << endl;
 		//cout << PercentageZeroPixel << endl;	
-		if (PercentageZeroPixel==0)
+		if (PercentageZeroPixel<=0.5)
 		{
 			rectangle(imgSkinColorResult, Point(x, y), Point(x + width, y + height), CV_RGB(0,255,0));
 			//cout << "Face Detected" << endl;
