@@ -164,6 +164,14 @@ Mat RGBFilter(Mat imgOriginal, Mat imgResult, int* array)
 	PrintArray(array, imgRGB.rows, imgRGB.cols, "RGB.txt");
 	return imgResult;
 }
+//Serial filter
+Mat SerialFilter(Mat imgOriginal,int*array)
+{
+	Mat imgSkinColorResult = imgOriginal.clone();
+	imgSkinColorResult = HSVFilter(imgOriginal, imgSkinColorResult, array);
+	
+	return imgSkinColorResult;
+}
 //Use skin color to locate the possible location of the face in the picture.
 Mat SkinColorDetection(Mat imgOriginal, int* array)
 {
@@ -174,7 +182,7 @@ Mat SkinColorDetection(Mat imgOriginal, int* array)
 	//initialize image container for the result image.
 	Mat imgResult;
 	imgResult = imgOriginal.clone();
-
+	//imgResult = HSVFilter(imgOriginal, imgResult, array);
 	for (int i = 0; i < 3; i++)
 	{
 		if (i==0)
@@ -349,7 +357,7 @@ Mat PartialSkinFilter(Mat imgOriginal, int* array)
 		Mat approxFace = imgSkinColorResult(r1).clone();
 		approxFace = Filter(approxFace,array);
 		cvtColor(approxFace,approxFace,CV_BGR2GRAY);
-		float PercentageZeroPixel = float(((width*height) - countNonZero(approxFace))/(width*height));	
+		float PercentageZeroPixel = float(float((width*height) - countNonZero(approxFace))/(width*height));	
 		//cout << PercentageZeroPixel << endl;	
 		if (PercentageZeroPixel==0)
 		{
@@ -404,13 +412,14 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 			}
 		}
 		
+		
 	}
 	//Need to consider;
-	imgSkinColorResult = SkinColorDetection(imgOriginal, array);
+	
+	//imgSkinColorResult = Filter(imgOriginal, array);
 	//imwrite("finalResult.jpg",imgSkinColorResult,param);
-	
+	imgSkinColorResult = SkinColorDetection(imgOriginal, array);
 	while(wait(NULL)>0){}
-	
 	int x,y,width,height;
 	std::ifstream face_input("Face.txt");
 	while (face_input >> x >> y >> width >> height)
@@ -613,6 +622,10 @@ Mat Combine(Mat imgOriginal, int* array)
 }
 void ImageProcess(Mat image,string command,bool showImage,string fileName)
 {
+	vector<int> param(2);
+	param[0] = cv::IMWRITE_JPEG_QUALITY;
+	param[1] = 95;
+
 	//initialize binary array
 	int* array;
 	int frameSize = image.rows * image.cols;
@@ -625,7 +638,7 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 	/*namedWindow("Display Image",WINDOW_AUTOSIZE);
 	imshow("Display Image", image);
 	waitKey(0);*/
-	Mat imgResult;
+	Mat imgResult = image.clone();
 	if (command == "ss")
 	{
 		for (int i = 0; i<1; i++){
@@ -707,6 +720,9 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 	}else if (command == "pf")
 	{
 		imgResult = PartialSkinFilter(image, array);
+	}else if (command == "sf")
+	{
+		imgResult = SerialFilter(image, array);
 	}
 	//PrintArray(array,imgResult.rows, imgResult.cols, "Result.txt");
 	/*Mat imgTransform;
@@ -756,17 +772,22 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 	out.open("Result.txt");
 	out << imgResult << endl;
 	out.close();*/
-
+	
+	
 	if (showImage)
 	{
 		imshow(fileName,image);
 		imshow(fileName+"_Result", imgResult);
+		imwrite("Result/"+fileName+"_Result",imgResult,param);
+		//imshow("Contours",drawing);
 		moveWindow(fileName,500,0);
 		waitKey(0);
 		destroyAllWindows();
 		//destroyWindow(fileName);
 	}
 	free(array);
+	imgResult.release();
+	image.release();
 	
 }
 int main(int argc, char** argv)
@@ -811,6 +832,7 @@ int main(int argc, char** argv)
 	}else
 	{
 		image = imread(argv[1],1);
+		//cvtColor(image,image,COLOR_BGR2RGB);
 		ImageProcess(image,argv[2],showImage,argv[1]);
 	}
 	
@@ -837,6 +859,5 @@ int main(int argc, char** argv)
 		//cin >> command; 
 	}*/
 
-	waitKey(0);
 	return 0;
 }
