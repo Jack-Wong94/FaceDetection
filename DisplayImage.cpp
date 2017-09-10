@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
@@ -246,6 +247,22 @@ Mat SkinColorDetection(Mat imgOriginal, int* array)
 	//Do a bitwise operation to cancel out the unnecessary pixel.
 	cv::bitwise_and(imgHSV,imgYCrCb,imgResult);
 	cv::bitwise_and(imgResult,imgRGB,imgResult);
+	//Draw Contour
+	RNG rng(12345);
+	//Mat imgResult_gray;
+	/*Mat canny_output;
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+	//cvtColor(imgResult, imgResult_gray,CV_BGR2GRAY);
+	blur(imgResult,imgResult,Size(3,3));
+	Canny(imgResult,canny_output,0,100,3);
+	findContours(canny_output,contours,hierarchy,CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE,Point(0,0));	
+	Mat drawing = Mat::zeros(canny_output.size(),CV_8UC3);
+	for (int i = 0; i< contours.size(); i++)
+	{
+		Scalar color = Scalar(0,0,255);
+		drawContours(imgResult, contours,i, color, 2, 8, hierarchy, 0, Point());
+	}*/
 
 	//Testing
 	/*
@@ -495,11 +512,22 @@ Mat MultiProcess(Mat imgOriginal, int* array)
 //Combine haar cascade classifier with skin color segmentation algorithm
 Mat Combine(Mat imgOriginal, int* array)
 {
+	clock_t t1,t2,t3,t4;
+	t1=clock();
 	Mat imgSkinColorResult = Filter(imgOriginal, array);
+	t2=clock();
 	vector<Rect> eyes = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_eye.xml");
+	t3=clock();
 	vector<Rect> faces = LocateFeatureBox(imgOriginal, "CascadeClassifier/haarcascade_frontalface_alt.xml");
+	t4=clock();
 	DrawFeatureBox(imgSkinColorResult, eyes);
 	DrawFeatureBox(imgSkinColorResult, faces);
+	float diffFilter = ((float)t2 - (float)t1)/CLOCKS_PER_SEC;
+	float diffEyeCascade = ((float)t3 - (float)t2)/CLOCKS_PER_SEC;
+	float diffFaceCascade = ((float)t4 - (float)t3)/CLOCKS_PER_SEC;
+	cout << "The Skin color segmentation takes " << diffFilter << "s to complete." << endl;
+	cout << "The EyeCascade segmentation takes " << diffEyeCascade << "s to complete." << endl;
+	cout << "The FaceCascade segmentation takes " << diffFaceCascade << "s to complete." << endl;
 	return imgSkinColorResult;
 
 	/*std::thread t1(foo);
@@ -778,7 +806,7 @@ void ImageProcess(Mat image,string command,bool showImage,string fileName)
 	{
 		imshow(fileName,image);
 		imshow(fileName+"_Result", imgResult);
-		imwrite("Result/"+fileName+"_Result",imgResult,param);
+		imwrite("Result_"+fileName,imgResult,param);
 		//imshow("Contours",drawing);
 		moveWindow(fileName,500,0);
 		waitKey(0);
