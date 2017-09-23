@@ -17,17 +17,28 @@ This project is tested on Altera DE1-SoC FPGA development board. Install Linux U
 `./FaceDetection [path-to-image-dir or image_destination] [option] [show-image]` : The command to run the face detection system.
 
 There are 7 options:
+
 `ss` : Sequential-Process pixel-based face detection
+
 `sp` : multi-process pixel-based face detection
+
 `e` : eye cascade classifier
+
 `f` : face cascade classifier
+
 `c` : sequential process to handle all face detection modules
+
 `mp` : multi process to handle all face detection modules.
+
 `pf` : Partial skin color segmentation filter which Use skin color segmentation on the feature box only but not the entire image.
 
 To show the output-image, type `y` in the `[show-image]` option.
+
 To time the processing time, use `time` command.
 
 `gprof FaceDetection`: Show the profiling result.
 
 E.g. `./FaceDetection FaceDataset/ mp y`: Use multi process to process all input images in the FaceDataset directory using pixel-based and feature-based face detection module.
+
+## Version Control
+We are using github for version control. If required, please sent an email to lwon229@aucklanduni.ac.nz to get access to the repository.
