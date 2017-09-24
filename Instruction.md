@@ -41,3 +41,8 @@ To time the processing time, use `time` command. E.g. `time ./FaceDetection Face
 E.g. `./FaceDetection FaceDataset/ mp y`: Use multi-process to handle all input images in the FaceDataset directory using both pixel-based and feature-based face detection module.
 
 ## Future Work
+1. Implement communication protocol between HPS and FPGA fabric (AXI bridge protocol)
+
+2. Improving the face detection algorithm by reduce processing time.
+
+3. Implement face recognition algorithm base on the face detection system.
